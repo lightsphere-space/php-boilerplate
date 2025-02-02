@@ -6,6 +6,7 @@ on:
       - main  # Trigger on pushes to the main branch
     paths:
       - 'Dockerfile.php'  # Trigger only if Dockerfile.php is changed
+      - '.github/workflows/docker.yml'
 
 jobs:
   build:
