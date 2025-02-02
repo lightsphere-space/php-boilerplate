@@ -48,8 +48,8 @@ RUN set -ex \
         sysvmsg \
         shmop \
         posix \
-    && pecl install redis imagick xdebug \
-    && docker-php-ext-enable redis imagick xdebug \
+    && pecl install imagick xdebug \
+    && docker-php-ext-enable imagick xdebug \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* /tmp/* /usr/share/man /usr/share/doc
 
