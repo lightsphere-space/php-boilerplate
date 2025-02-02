@@ -31,7 +31,7 @@ jobs:
       # Tag the image with the "latest" tag
       - name: Tag Docker image as latest
         run: |
-          docker tag ${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/my-app:latest
+          docker tag ${{ secrets.DOCKER_USERNAME }}/php-fpm-alpine:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/php-fpm-alpine:latest
           
       # Push the Docker image to Docker Hub
       - name: Push Docker image
@@ -42,5 +42,5 @@ jobs:
       # Push the Docker image with "latest" tag
       - name: Push Docker image with latest tag
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/my-app:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/php-fpm-alpine:latest
 
