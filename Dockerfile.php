@@ -1,28 +1,29 @@
-FROM php:7.3.33-fpm-alpine3.14
+FROM php:7.3.33-fpm-alpine3.14 AS build
 
-# Install required system packages
-RUN apk add --no-cache \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    zip \
-    unzip \
-    icu-dev \
-    zlib-dev \
-    oniguruma-dev \
-    libxml2-dev \
-    curl-dev \
-    mariadb-client \
-    postgresql-dev \
-    libzip-dev \
-    imagemagick-dev \
-    git \
-    supervisor \
-    shadow \
-    autoconf \
-    gcc \
-    g++ \
-    make \
+# Install required system packages and PHP extensions
+RUN set -ex \
+    && apk add --no-cache --virtual .build-deps \
+        autoconf \
+        gcc \
+        g++ \
+        make \
+        libtool \
+        curl-dev \
+        freetype-dev \
+        icu-dev \
+        libjpeg-turbo-dev \
+        libpng-dev \
+        libxml2-dev \
+        oniguruma-dev \
+        postgresql-dev \
+        zlib-dev \
+        libzip-dev \
+        imagemagick-dev \
+    && apk add --no-cache \
+        mariadb-client \
+        git \
+        supervisor \
+        shadow \
     && docker-php-ext-configure gd --with-freetype-dir=/usr/include --with-jpeg-dir=/usr/include \
     && docker-php-ext-install -j$(nproc) \
         gd \
@@ -34,7 +35,6 @@ RUN apk add --no-cache \
         opcache \
         bcmath \
         exif \
-        iconv \
         soap \
         sockets \
         mbstring \
@@ -47,15 +47,35 @@ RUN apk add --no-cache \
         sysvshm \
         sysvmsg \
         shmop \
-        posix
-
-# Install PECL extensions
-RUN apk add --no-cache --virtual .build-deps \
-    libtool \
+        posix \
     && pecl install redis imagick xdebug \
     && docker-php-ext-enable redis imagick xdebug \
-    && apk del .build-deps
+    && apk del .build-deps \
+    && rm -rf /var/cache/apk/* /tmp/* /usr/share/man /usr/share/doc
 
-# Clear cache
-RUN rm -rf /var/cache/apk/*
+# Use a new, clean image for the final stage
+FROM php:7.3.33-fpm-alpine3.14
 
+# Copy the built PHP extensions from the build stage
+COPY --from=build /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+COPY --from=build /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+
+# Install runtime dependencies
+RUN set -ex \
+    && apk add --no-cache \
+        mariadb-client \
+        supervisor \
+        shadow \
+    && rm -rf /var/cache/apk/* /tmp/* /usr/share/man /usr/share/doc
+
+# Copy any additional configuration files or scripts if needed
+# COPY ./your-config-files /path/in/container
+
+# Set up the working directory
+WORKDIR /var/www/html
+
+# Expose the necessary ports
+EXPOSE 9000
+
+# Start the PHP-FPM server
+CMD ["php-fpm"]
